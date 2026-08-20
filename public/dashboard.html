@@ -1,0 +1,348 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Data Chain Dashboard — manage encrypted files, view blockchain ledger, collaborate in groups, and control account security.">
+<title>Data Chain · Dashboard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body class="dash-body">
+  <div class="bg-effects">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="grid-overlay"></div>
+    <div class="scan-line"></div>
+  </div>
+  <div class="topbar">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <h1 style="font-size:1.1rem;">Data Chain</h1>
+    </div>
+    <div style="display:flex; align-items:center; gap:16px;">
+      <span class="user-email" id="userEmail"></span>
+      <button class="btn-ghost" id="logoutBtn">Log out</button>
+    </div>
+  </div>
+
+  <div class="key-bar" id="keyBar">
+    <div class="key-bar-status">
+      <span class="key-dot" id="keyDot"></span>
+      <span id="keyStatusText">Private key locked — needed to download files</span>
+    </div>
+    <div class="key-bar-form" id="keyBarForm">
+      <input type="file" id="keyFileInput" accept=".json">
+      <input type="password" id="keyPassword" placeholder="Account password">
+      <button class="btn-small" id="unlockKeyBtn">Unlock</button>
+    </div>
+  </div>
+
+  <div class="dash-layout">
+    <div class="sidebar">
+      <div class="nav-item active" data-panel="myFiles">📁 My Files</div>
+      <div class="nav-item" data-panel="sharedFiles">🤝 Shared Files</div>
+      <div class="nav-item" data-panel="upload">⬆️ Upload File</div>
+      <div class="nav-item" data-panel="send">📤 Send File</div>
+      <div class="nav-item" data-panel="blockchain">⛓️ Blockchain</div>
+      <div class="nav-item" data-panel="groups">👥 Groups</div>
+      <div class="nav-item" data-panel="security">⚙️ Settings</div>
+      <div class="nav-item" data-panel="admin" id="adminNavItem" style="display:none;">🛡️ Admin</div>
+    </div>
+
+    <div class="dash-main">
+      <div class="panel active" id="panel-myFiles">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2>My Files</h2>
+            <p class="panel-sub">Files only you have, uploaded for personal storage.</p>
+          </div>
+          <select class="sort-select" id="myFilesSort">
+            <option value="date">Sort: Newest first</option>
+            <option value="name">Sort: Name (A–Z)</option>
+            <option value="type">Sort: File type</option>
+          </select>
+        </div>
+        <div id="fileListMsg" class="msg"></div>
+        <div id="fileList"></div>
+      </div>
+
+      <div class="panel" id="panel-sharedFiles">
+        <div style="display:flex; justify-content:space-between; align-items:flex-end; flex-wrap:wrap; gap:10px;">
+          <div>
+            <h2>Shared Files</h2>
+            <p class="panel-sub">Files sent to you, files you've sent, and anything in a group.</p>
+          </div>
+          <select class="sort-select" id="sharedFilesSort">
+            <option value="date">Sort: Newest first</option>
+            <option value="name">Sort: Name (A–Z)</option>
+            <option value="type">Sort: File type</option>
+          </select>
+        </div>
+        <div id="sharedFileList"></div>
+      </div>
+
+      <div class="panel" id="panel-upload">
+        <h2>Upload File</h2>
+        <p class="panel-sub">Encrypted with your own key — only you can decrypt it.</p>
+        <div id="uploadMsg" class="msg"></div>
+        <form id="uploadForm">
+          <div class="field">
+            <label for="uploadFile">File</label>
+            <input type="file" id="uploadFile" required>
+          </div>
+          <div class="field">
+            <label for="uploadExpiry">Access duration</label>
+            <select id="uploadExpiry">
+              <option value="none">Unlimited</option>
+              <option value="1h">1 hour</option>
+              <option value="1d">1 day</option>
+              <option value="3d">3 days</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div class="field" id="uploadCustomHoursField" style="display:none;">
+            <label for="uploadCustomHours">Custom duration (hours)</label>
+            <input type="number" id="uploadCustomHours" min="1" placeholder="e.g. 6">
+          </div>
+          <button type="submit" class="btn-primary" id="uploadBtn">Encrypt & Upload</button>
+        </form>
+      </div>
+
+      <div class="panel" id="panel-send">
+        <h2>Send File</h2>
+        <p class="panel-sub">Encrypted with the recipient's public key — only they can decrypt it.</p>
+        <div id="sendMsg" class="msg"></div>
+        <form id="sendForm">
+          <div class="field">
+            <label for="sendFile">File</label>
+            <input type="file" id="sendFile" required>
+          </div>
+          <div class="field">
+            <label for="recipientEmail">Recipient email</label>
+            <input type="email" id="recipientEmail" required placeholder="teammate@example.com">
+          </div>
+          <div class="field">
+            <label for="sendExpiry">Access duration</label>
+            <select id="sendExpiry">
+              <option value="none">Unlimited</option>
+              <option value="1h">1 hour</option>
+              <option value="1d">1 day</option>
+              <option value="3d">3 days</option>
+              <option value="custom">Custom</option>
+            </select>
+          </div>
+          <div class="field" id="sendCustomHoursField" style="display:none;">
+            <label for="sendCustomHours">Custom duration (hours)</label>
+            <input type="number" id="sendCustomHours" min="1" placeholder="e.g. 6">
+          </div>
+          <button type="submit" class="btn-primary" id="sendBtn">Encrypt & Send</button>
+        </form>
+      </div>
+
+      <div class="panel" id="panel-blockchain">
+        <h2>Blockchain Ledger</h2>
+        <p class="panel-sub">Every upload, send, and download — hash-chained and tamper-evident.</p>
+        <div id="chainStatus" class="msg"></div>
+        <div style="display:flex; gap:8px; margin-bottom:18px;">
+          <button class="btn-small" id="scopeMineBtn">My Activity</button>
+          <button class="btn-small" id="scopeAllBtn" style="display:none;">Full Ledger</button>
+          <button class="btn-small" id="validateChainBtn" style="margin-left:auto;">Re-validate Chain</button>
+        </div>
+        <div id="blockList"></div>
+      </div>
+
+      <div class="panel" id="panel-groups">
+        <h2>Groups</h2>
+        <p class="panel-sub">Shared folders — every member can decrypt, add versions, and manage access on files shared here.</p>
+
+        <div style="margin-bottom:24px;">
+          <div id="createGroupMsg" class="msg"></div>
+          <div style="display:flex; gap:8px;">
+            <input type="text" id="newGroupName" placeholder="New group name" style="flex:1; padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-radius:10px; color:var(--text); font-size:0.9rem;">
+            <button class="btn-primary" id="createGroupBtn" style="width:auto; margin-top:0; padding:0 18px;">Create</button>
+          </div>
+        </div>
+
+        <div id="groupList"></div>
+      </div>
+
+      <div class="panel" id="panel-security">
+        <h2>Settings</h2>
+        <p class="panel-sub">Account security and account management.</p>
+
+        <h3 style="font-size:1rem; margin:20px 0 8px;">2-Step Verification</h3>
+        <p class="hint" style="margin-top:0;">Your 2 security questions were set at signup — they always work for "Forgot password". This toggle only controls whether they're ALSO required after your password at login.</p>
+        <div id="twoFaStatus" class="msg" style="display:block;"></div>
+
+        <div style="display:flex; gap:8px; align-items:center; max-width:340px;">
+          <input type="password" id="toggle2faPassword" placeholder="Your password" style="flex:1; padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-radius:10px; color:var(--text); font-size:0.9rem;">
+          <button class="btn-primary" id="toggle2faBtn" style="width:auto; padding:0 18px; margin-top:0;">Toggle</button>
+        </div>
+
+        <h3 style="font-size:1rem; margin:28px 0 8px;">Change Security Questions</h3>
+        <p class="hint" style="margin-top:0;">Requires your current password.</p>
+        <div id="changeQuestionsMsg" class="msg"></div>
+
+        <div style="max-width:420px;">
+          <div class="field">
+            <label for="setQ1">Question 1</label>
+            <select id="setQ1">
+              <option value="What is your pet's name?">What is your pet's name?</option>
+              <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+              <option value="What city were you born in?">What city were you born in?</option>
+              <option value="What was the name of your first school?">What was the name of your first school?</option>
+              <option value="__custom__">Write my own question...</option>
+            </select>
+          </div>
+          <div class="field" id="setQ1CustomField" style="display:none;">
+            <input type="text" id="setQ1Custom" placeholder="Your custom question">
+          </div>
+          <div class="field">
+            <label for="setA1">Answer 1</label>
+            <input type="text" id="setA1">
+          </div>
+
+          <div class="field">
+            <label for="setQ2">Question 2</label>
+            <select id="setQ2">
+              <option value="What is your favorite food?">What is your favorite food?</option>
+              <option value="What was your childhood nickname?">What was your childhood nickname?</option>
+              <option value="What is the name of your best friend?">What is the name of your best friend?</option>
+              <option value="What was your first car?">What was your first car?</option>
+              <option value="__custom__">Write my own question...</option>
+            </select>
+          </div>
+          <div class="field" id="setQ2CustomField" style="display:none;">
+            <input type="text" id="setQ2Custom" placeholder="Your custom question">
+          </div>
+          <div class="field">
+            <label for="setA2">Answer 2</label>
+            <input type="text" id="setA2">
+          </div>
+
+          <div class="field">
+            <label for="changeQPassword">Current password</label>
+            <input type="password" id="changeQPassword">
+          </div>
+
+          <button class="btn-small" id="changeQuestionsBtn">Update Questions</button>
+        </div>
+
+        <h3 style="font-size:1rem; margin:28px 0 8px; color:var(--error);">Terminate Account</h3>
+        <p class="hint" style="margin-top:0;">Submitted to an admin for approval — nothing is deleted immediately.</p>
+        <div id="terminateMsg" class="msg"></div>
+        <div style="max-width:420px;">
+          <div class="field">
+            <label for="terminateReason">Reason</label>
+            <textarea id="terminateReason" rows="3" style="width:100%; padding:10px 12px; background:rgba(255,255,255,0.04); border:1px solid var(--glass-border); border-radius:10px; color:var(--text); font-size:0.9rem; resize:vertical;"></textarea>
+          </div>
+          <button class="btn-ghost" id="terminateBtn" style="border-color:var(--error); color:var(--error);">Request Account Termination</button>
+        </div>
+      </div>
+
+      <div class="panel" id="panel-admin">
+        <h2>Admin</h2>
+        <p class="panel-sub">Visible to admins only.</p>
+
+        <div style="display:flex; gap:8px; margin-bottom:20px; flex-wrap:wrap;">
+          <button class="btn-small" id="adminTabUsers">Users</button>
+          <button class="btn-small" id="adminTabLogs">Logs</button>
+          <button class="btn-small" id="adminTabAlerts">Security Alerts</button>
+          <button class="btn-small" id="adminTabRequests">Account Requests</button>
+          <button class="btn-small" id="adminTabOnline">Online Now</button>
+          <button class="btn-small" id="adminTabTraffic">File Traffic</button>
+        </div>
+
+        <div id="adminUsersSection">
+          <div id="adminUserList"></div>
+        </div>
+
+        <div id="adminLogsSection" style="display:none;">
+          <button class="btn-small" id="exportLogsBtn" style="margin-bottom:14px;">⬇ Export CSV</button>
+          <div id="adminLogList"></div>
+        </div>
+
+        <div id="adminAlertsSection" style="display:none;">
+          <div id="adminAlertList"></div>
+        </div>
+
+        <div id="adminRequestsSection" style="display:none;">
+          <div id="adminRequestsList"></div>
+        </div>
+
+        <div id="adminOnlineSection" style="display:none;">
+          <div id="adminOnlineList"></div>
+        </div>
+
+        <div id="adminTrafficSection" style="display:none;">
+          <p class="hint" style="margin-top:0;">Live feed — new activity appears at the top automatically while this tab is open.</p>
+          <div id="adminTrafficList"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-overlay" id="groupUploadOverlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="groupUploadTitle">Share File to Group</h3>
+        <button class="btn-ghost" id="groupUploadCloseBtn">✕</button>
+      </div>
+      <div id="groupUploadMsg" class="msg"></div>
+      <form id="groupUploadForm">
+        <div class="field">
+          <label for="groupUploadFile">File</label>
+          <input type="file" id="groupUploadFile" required>
+        </div>
+        <div class="field">
+          <label for="groupUploadExpiry">Access duration</label>
+          <select id="groupUploadExpiry">
+            <option value="none">Unlimited</option>
+            <option value="1h">1 hour</option>
+            <option value="1d">1 day</option>
+            <option value="3d">3 days</option>
+            <option value="custom">Custom</option>
+          </select>
+        </div>
+        <div class="field" id="groupUploadCustomHoursField" style="display:none;">
+          <label for="groupUploadCustomHours">Custom duration (hours)</label>
+          <input type="number" id="groupUploadCustomHours" min="1" placeholder="e.g. 6">
+        </div>
+        <button type="submit" class="btn-primary" id="groupUploadBtn">Encrypt & Share</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="context-menu" id="contextMenu" style="display:none;">
+    <div class="context-menu-item" id="ctxAddVersion">➕ Add New Version</div>
+    <div class="context-menu-item" id="ctxViewVersions">🕘 View Versions</div>
+    <div class="context-menu-item" id="ctxSetAccess">⏱️ Set Access</div>
+    <div class="context-menu-item ctx-danger" id="ctxDelete">🗑️ Delete</div>
+  </div>
+
+  <div class="modal-overlay" id="modalOverlay" style="display:none;">
+    <div class="modal-card">
+      <div class="modal-header">
+        <h3 id="modalTitle"></h3>
+        <button class="btn-ghost" id="modalCloseBtn">✕</button>
+      </div>
+      <div id="modalBody"></div>
+    </div>
+  </div>
+
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/forge/1.3.1/forge.min.js"></script>
+  <script src="/socket.io/socket.io.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/crypto-client.js"></script>
+  <script src="js/files.js"></script>
+  <script src="js/blockchain.js"></script>
+  <script src="js/context-menu.js"></script>
+  <script src="js/groups.js"></script>
+  <script src="js/settings.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>

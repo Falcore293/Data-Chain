@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="description" content="Create your Data Chain account — secure file sharing with end-to-end encryption and blockchain integrity verification.">
+<title>Data Chain · Sign Up</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div class="bg-effects">
+    <div class="orb orb-1"></div>
+    <div class="orb orb-2"></div>
+    <div class="orb orb-3"></div>
+    <div class="grid-overlay"></div>
+    <div class="scan-line"></div>
+  </div>
+  <div class="auth-card" style="max-width:440px;">
+    <div class="brand">
+      <span class="brand-dot"></span>
+      <h1>Data Chain</h1>
+    </div>
+    <p class="subtitle">Create your account</p>
+
+    <div class="msg" id="msg"></div>
+
+    <form id="signupForm">
+      <div class="field">
+        <label for="email">Email</label>
+        <input type="email" id="email" required autocomplete="email">
+      </div>
+      <div class="field">
+        <label for="password">Password</label>
+        <input type="password" id="password" required minlength="8" autocomplete="new-password">
+      </div>
+      <p class="hint">Your password also protects your private key file — don't forget it, it can't be reset.</p>
+
+      <p class="hint" style="margin-top:4px;">Set 2 security questions now. These power "Forgot password" later and can also be required as an extra login step — toggle that anytime from Settings.</p>
+
+      <div class="field">
+        <label for="secQ1">Question 1</label>
+        <select id="secQ1">
+          <option value="What is your pet's name?">What is your pet's name?</option>
+          <option value="What is your mother's maiden name?">What is your mother's maiden name?</option>
+          <option value="What city were you born in?">What city were you born in?</option>
+          <option value="What was the name of your first school?">What was the name of your first school?</option>
+          <option value="__custom__">Write my own question...</option>
+        </select>
+      </div>
+      <div class="field" id="secQ1CustomField" style="display:none;">
+        <input type="text" id="secQ1Custom" placeholder="Your custom question">
+      </div>
+      <div class="field">
+        <label for="secA1">Answer 1</label>
+        <input type="text" id="secA1" required>
+      </div>
+
+      <div class="field">
+        <label for="secQ2">Question 2</label>
+        <select id="secQ2">
+          <option value="What is your favorite food?">What is your favorite food?</option>
+          <option value="What was your childhood nickname?">What was your childhood nickname?</option>
+          <option value="What is the name of your best friend?">What is the name of your best friend?</option>
+          <option value="What was your first car?">What was your first car?</option>
+          <option value="__custom__">Write my own question...</option>
+        </select>
+      </div>
+      <div class="field" id="secQ2CustomField" style="display:none;">
+        <input type="text" id="secQ2Custom" placeholder="Your custom question">
+      </div>
+      <div class="field">
+        <label for="secA2">Answer 2</label>
+        <input type="text" id="secA2" required>
+      </div>
+
+      <button type="submit" class="btn-primary" id="submitBtn">Create Account</button>
+    </form>
+
+    <div class="switch-link">Already have an account? <a href="login.html">Log in</a></div>
+  </div>
+
+  <script src="js/signup.js"></script>
+</body>
+</html>
