@@ -7,7 +7,7 @@
 <title>Data Chain · Sign Up</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
@@ -18,27 +18,46 @@
     <div class="grid-overlay"></div>
     <div class="scan-line"></div>
   </div>
-  <div class="auth-card" style="max-width:440px;">
-    <div class="brand">
-      <span class="brand-dot"></span>
+
+  <div class="auth-card" style="max-width:450px;">
+    <div class="auth-head">
+      <svg class="logo-mark" width="60" height="60" viewBox="0 0 48 48" fill="none" aria-hidden="true">
+        <defs>
+          <linearGradient id="dcLogoGrad" x1="8" y1="4" x2="40" y2="44" gradientUnits="userSpaceOnUse">
+            <stop stop-color="#00f0ff"/>
+            <stop offset="1" stop-color="#a855f7"/>
+          </linearGradient>
+        </defs>
+        <path d="M24 3.5 L41.5 13.75 V34.25 L24 44.5 L6.5 34.25 V13.75 Z" stroke="url(#dcLogoGrad)" stroke-width="2.2" stroke-linejoin="round"/>
+        <g transform="translate(12,12)" stroke="url(#dcLogoGrad)" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M10 13a5 5 0 0 0 7.54.54l3-3a5 5 0 0 0-7.07-7.07l-1.72 1.71"/>
+          <path d="M14 11a5 5 0 0 0-7.54-.54l-3 3a5 5 0 0 0 7.07 7.07l1.71-1.71"/>
+        </g>
+      </svg>
       <h1>Data Chain</h1>
+      <p class="subtitle">Create your account</p>
     </div>
-    <p class="subtitle">Create your account</p>
 
     <div class="msg" id="msg"></div>
 
     <form id="signupForm">
       <div class="field">
         <label for="email">Email</label>
-        <input type="email" id="email" required autocomplete="email">
+        <input type="email" id="email" required autocomplete="email" placeholder="you@example.com">
       </div>
       <div class="field">
         <label for="password">Password</label>
-        <input type="password" id="password" required minlength="8" autocomplete="new-password">
+        <div class="pw-wrap">
+          <input type="password" id="password" required minlength="8" autocomplete="new-password" placeholder="At least 8 characters">
+          <button type="button" class="pw-toggle" data-target="password" aria-label="Show password">
+            <svg class="pw-icon-show" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M2 12s3.5-7 10-7 10 7 10 7-3.5 7-10 7-10-7-10-7Z"/><circle cx="12" cy="12" r="3"/></svg>
+            <svg class="pw-icon-hide" style="display:none;" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M9.88 9.88a3 3 0 1 0 4.24 4.24"/><path d="M10.73 5.08A10.43 10.43 0 0 1 12 5c6.5 0 10 7 10 7a13.16 13.16 0 0 1-1.67 2.68"/><path d="M6.61 6.61A13.53 13.53 0 0 0 2 12s3.5 7 10 7a9.74 9.74 0 0 0 5.39-1.61"/><line x1="2" y1="2" x2="22" y2="22"/></svg>
+          </button>
+        </div>
       </div>
       <p class="hint">Your password also protects your private key file — don't forget it, it can't be reset.</p>
 
-      <p class="hint" style="margin-top:4px;">Set 2 security questions now. These power "Forgot password" later and can also be required as an extra login step — toggle that anytime from Settings.</p>
+      <p class="hint" style="margin-top:4px;">Set 2 Knowledge-Based Authentication (KBA) security questions now. These power "Forgot password" later and can also be required at login — toggle KBA anytime from Settings.</p>
 
       <div class="field">
         <label for="secQ1">Question 1</label>
@@ -80,8 +99,16 @@
     </form>
 
     <div class="switch-link">Already have an account? <a href="login.html">Log in</a></div>
+
+    <div class="auth-trust">
+      <span class="trust-chip">AES-256</span>
+      <span class="trust-chip">Zero-knowledge keys</span>
+      <span class="trust-chip">Blockchain verified</span>
+    </div>
   </div>
 
+  <script src="js/bg-effects.js"></script>
+  <script src="js/auth-enhance.js"></script>
   <script src="js/signup.js"></script>
 </body>
 </html>

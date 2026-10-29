@@ -81,14 +81,14 @@ form.addEventListener('submit', async (e) => {
       return;
     }
 
-    if (data.twoFactorRequired) {
+    if (data.kbaRequired || data.twoFactorRequired) {
       pendingEmail = email;
       form.style.display = 'none';
       renderSecurityQuestions(data.questions);
       twoFaForm.style.display = 'block';
       submitBtn.disabled = false;
       submitBtn.textContent = 'Log In';
-      showMsg('Answer your security questions to finish logging in.', 'success');
+      showMsg('Answer your KBA security questions to finish logging in.', 'success');
       return;
     }
 
@@ -113,7 +113,7 @@ twoFaForm.addEventListener('submit', async (e) => {
   }));
 
   try {
-    const res = await fetch('/api/auth/login/verify-2fa', {
+    const res = await fetch('/api/auth/login/verify-kba', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: pendingEmail, answers })
@@ -123,10 +123,10 @@ twoFaForm.addEventListener('submit', async (e) => {
     if (!res.ok) {
       showMsg(data.error || 'Verification failed', 'error');
       if (data.locked && data.retryAfterSeconds) {
-        startLockoutCountdown(data.retryAfterSeconds, twoFaSubmitBtn, 'Verify & Log In');
+        startLockoutCountdown(data.retryAfterSeconds, twoFaSubmitBtn, 'Verify KBA & Log In');
       } else {
         twoFaSubmitBtn.disabled = false;
-        twoFaSubmitBtn.textContent = 'Verify & Log In';
+        twoFaSubmitBtn.textContent = 'Verify KBA & Log In';
       }
       return;
     }
@@ -135,6 +135,6 @@ twoFaForm.addEventListener('submit', async (e) => {
   } catch (err) {
     showMsg('Could not reach the server. Please try again.', 'error');
     twoFaSubmitBtn.disabled = false;
-    twoFaSubmitBtn.textContent = 'Verify & Log In';
+    twoFaSubmitBtn.textContent = 'Verify KBA & Log In';
   }
 });

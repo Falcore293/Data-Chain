@@ -11,7 +11,7 @@ toggleCustomQuestion('setQ1', 'setQ1CustomField');
 toggleCustomQuestion('setQ2', 'setQ2CustomField');
 
 // ---------------------------------------------------------------------
-// 2FA toggle
+// KBA toggle
 // ---------------------------------------------------------------------
 document.getElementById('toggle2faBtn').addEventListener('click', async () => {
   const password = document.getElementById('toggle2faPassword').value;
@@ -24,13 +24,14 @@ document.getElementById('toggle2faBtn').addEventListener('click', async () => {
     return;
   }
 
-  const newState = !currentUser.twoFactorEnabled;
+  const currentState = currentUser.kbaEnabled ?? currentUser.twoFactorEnabled;
+  const newState = !currentState;
 
   btn.disabled = true;
   btn.textContent = 'Saving...';
 
   try {
-    const res = await fetch('/api/auth/2fa/toggle', {
+    const res = await fetch('/api/auth/kba/toggle', {
       method: 'POST',
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({ enabled: newState, password })
@@ -42,6 +43,7 @@ document.getElementById('toggle2faBtn').addEventListener('click', async () => {
       statusEl.textContent = data.error || 'Could not update setting';
     } else {
       currentUser.twoFactorEnabled = newState;
+      currentUser.kbaEnabled = newState;
       document.getElementById('toggle2faPassword').value = '';
       updateTwoFaUI();
     }
@@ -50,7 +52,7 @@ document.getElementById('toggle2faBtn').addEventListener('click', async () => {
     statusEl.textContent = 'Could not reach the server.';
   } finally {
     btn.disabled = false;
-    btn.textContent = 'Toggle';
+    btn.textContent = 'Toggle KBA';
   }
 });
 
@@ -85,7 +87,7 @@ document.getElementById('changeQuestionsBtn').addEventListener('click', async ()
   btn.textContent = 'Saving...';
 
   try {
-    const res = await fetch('/api/auth/2fa/questions', {
+    const res = await fetch('/api/auth/kba/questions', {
       method: 'POST',
       headers: { ...authHeaders(), 'Content-Type': 'application/json' },
       body: JSON.stringify({

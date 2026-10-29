@@ -7,7 +7,7 @@
 // This file handles user account lifecycle and identity management:
 //   1. Account Registration (`POST /signup`)
 //   2. User Authentication & Login (`POST /login`)
-//   3. Two-Step Verification (`POST /login/verify-2fa`)
+//   3. Knowledge-Based Authentication (`POST /login/verify-kba` or `/login/verify-2fa`)
 //   4. Password Recovery Flow (`/forgot-password/*`)
 //   5. Security Settings & Account Deletion Requests
 //   6. Public Key Lookup (`GET /public-key/:email`)
@@ -28,7 +28,7 @@
 //    email and role. The client sends this token in subsequent API requests.
 //
 //  • Shared Account Lockout Protection:
-//    Login, 2FA, and Password Reset share the same lockout bucket (`loginAttempts.js`).
+//    Login, KBA, and Password Reset share the same lockout bucket (`loginAttempts.js`).
 //    3 consecutive failures trigger a 60-second account lockout.
 // ============================================================================
 
@@ -183,7 +183,7 @@ router.post('/signup', async (req, res) => {
 //   1. Account Lockout Check: Verifies if account is locked due to 3 failed tries.
 //   2. Password Verification: Compares supplied password against stored bcrypt hash.
 //   3. Suspension Check: Denies access if admin flagged `suspended = 1`.
-//   4. 2FA Check: If 2FA enabled, returns required security questions instead of JWT.
+//   4. KBA Check: If KBA enabled, returns required security questions instead of JWT.
 //   5. On success: Resets lockout counter, logs successful attempt, issues JWT.
 // ============================================================================
 
@@ -238,12 +238,12 @@ router.post('/login', async (req, res) => {
       return res.status(403).json({ error: 'This account has been suspended by an administrator.' });
     }
 
-    // Two-Step Verification Gate
+    // Knowledge-Based Authentication (KBA) Gate
     if (user.twoFactorEnabled) {
       const questions = await db.all(
         'SELECT id, questionText FROM security_questions WHERE email = ? ORDER BY id ASC', [email]
       );
-      return res.json({ twoFactorRequired: true, email, questions });
+      return res.json({ twoFactorRequired: true, kbaRequired: true, email, questions });
     }
 
     // Login successful: issue session token
@@ -257,14 +257,14 @@ router.post('/login', async (req, res) => {
 });
 
 // ============================================================================
-// ROUTE: POST /api/auth/login/verify-2fa
+// ROUTE: POST /api/auth/login/verify-kba (and /login/verify-2fa for compatibility)
 // ============================================================================
-// PURPOSE: Verifies security question answers for 2-step authentication.
+// PURPOSE: Verifies security question answers for KBA authentication.
 // Verifies answers against bcrypt hashes, enforces lockout on failure.
 // ============================================================================
 
-// POST /api/auth/login/verify-2fa   { email, answers: [{ questionId, answer }] }
-router.post('/login/verify-2fa', async (req, res) => {
+// POST /api/auth/login/verify-kba   { email, answers: [{ questionId, answer }] }
+router.post(['/login/verify-kba', '/login/verify-2fa'], async (req, res) => {
   try {
     const { email, answers } = req.body;
     if (!email || !Array.isArray(answers) || answers.length === 0) {
@@ -308,7 +308,7 @@ router.post('/login/verify-2fa', async (req, res) => {
     await logLogin(db, email, true, 'security questions verified', req);
     res.json({ token: issueToken(user), email: user.email });
   } catch (err) {
-    console.error('2-step verify error:', err);
+    console.error('KBA verify error:', err);
     res.status(500).json({ error: 'Verification failed' });
   }
 });
@@ -412,9 +412,26 @@ router.post('/forgot-password/reset', async (req, res) => {
     const passwordHash = await bcrypt.hash(newPassword, 10);
     await db.run('UPDATE users SET passwordHash = ? WHERE email = ?', [passwordHash, payload.email]);
 
+    // Issue a brand-new RSA key pair for this account. The old private key
+    // was encrypted with the old password and cannot be re-encrypted, and
+    // files already encrypted with the old public key stay locked to that
+    // old key. From this point on, uploads/sends use the new public key and
+    // the user unlocks downloads with the newly downloaded key file.
+    const { publicKey, privateKey } = generateRSAKeyPair();
+    const encryptedPrivateKey = encryptPrivateKey(privateKey, newPassword);
+
+    const updated = await db.run('UPDATE public_keys SET publicKeyPem = ? WHERE email = ?', [publicKey, payload.email]);
+    if (!updated || updated.changes === 0) {
+      await db.run('INSERT INTO public_keys (email, publicKeyPem) VALUES (?, ?)', [payload.email, publicKey]);
+    }
+
+    await db.run('INSERT INTO security_events (email, eventType, detail) VALUES (?, ?, ?)',
+      [payload.email, 'key-rotation', 'New key pair issued after password reset']);
+
     res.json({
-      message: 'Password reset. Note: your existing private key file no longer works, since it was encrypted with your old password. Files encrypted for you before this reset cannot be decrypted with a new key file - there is no way to recover this.',
-      email: payload.email
+      message: 'Password reset. A NEW private key file is downloading now — save it somewhere safe. Your old key file no longer works, and files encrypted for your old key cannot be decrypted anymore. All future uploads and sends will use your new key.',
+      email: payload.email,
+      privateKeyBundle: { email: payload.email, ...encryptedPrivateKey }
     });
   } catch (err) {
     console.error('Password reset error:', err);
@@ -426,8 +443,8 @@ router.post('/forgot-password/reset', async (req, res) => {
 // USER SETTINGS & PUBLIC KEY ENDPOINTS
 // ============================================================================
 
-// POST /api/auth/2fa/toggle   (requireAuth)   { enabled, password }
-router.post('/2fa/toggle', requireAuth, async (req, res) => {
+// POST /api/auth/kba/toggle (and /2fa/toggle)   (requireAuth)   { enabled, password }
+router.post(['/kba/toggle', '/2fa/toggle'], requireAuth, async (req, res) => {
   const { enabled, password } = req.body;
   if (typeof enabled !== 'boolean') return res.status(400).json({ error: 'enabled must be true or false' });
   if (!password) return res.status(400).json({ error: 'Password is required to change this setting' });
@@ -438,11 +455,11 @@ router.post('/2fa/toggle', requireAuth, async (req, res) => {
   if (!match) return res.status(401).json({ error: 'Incorrect password' });
 
   await db.run('UPDATE users SET twoFactorEnabled = ? WHERE email = ?', [enabled ? 1 : 0, req.user.email]);
-  res.json({ message: `2-step verification ${enabled ? 'enabled' : 'disabled'}.`, twoFactorEnabled: enabled });
+  res.json({ message: `KBA verification ${enabled ? 'enabled' : 'disabled'}.`, twoFactorEnabled: enabled, kbaEnabled: enabled });
 });
 
-// POST /api/auth/2fa/questions   (requireAuth)   { questions, password }
-router.post('/2fa/questions', requireAuth, async (req, res) => {
+// POST /api/auth/kba/questions (and /2fa/questions)   (requireAuth)   { questions, password }
+router.post(['/kba/questions', '/2fa/questions'], requireAuth, async (req, res) => {
   const { questions, password } = req.body;
   if (!password) return res.status(400).json({ error: 'Password is required to change security questions' });
   const questionsError = validateQuestionsPayload(questions);
@@ -462,8 +479,8 @@ router.post('/2fa/questions', requireAuth, async (req, res) => {
   res.json({ message: 'Security questions updated.' });
 });
 
-// GET /api/auth/2fa/questions   (requireAuth)
-router.get('/2fa/questions', requireAuth, async (req, res) => {
+// GET /api/auth/kba/questions (and /2fa/questions)   (requireAuth)
+router.get(['/kba/questions', '/2fa/questions'], requireAuth, async (req, res) => {
   const db = await getDB();
   const questions = await db.all('SELECT id, questionText FROM security_questions WHERE email = ? ORDER BY id ASC', [req.user.email]);
   res.json({ questions });
@@ -489,7 +506,7 @@ router.get('/me', requireAuth, async (req, res) => {
   const db = await getDB();
   const user = await db.get('SELECT email, role, twoFactorEnabled, createdAt FROM users WHERE email = ?', [req.user.email]);
   if (!user) return res.status(404).json({ error: 'Account not found' });
-  res.json(user);
+  res.json({ ...user, kbaEnabled: !!user.twoFactorEnabled });
 });
 
 // GET /api/auth/public-key/:email - Used by clients to retrieve public RSA key for file encryption

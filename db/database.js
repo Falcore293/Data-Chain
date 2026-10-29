@@ -66,12 +66,12 @@ async function getDB() {
       email             TEXT UNIQUE NOT NULL,
       passwordHash      TEXT NOT NULL,                  -- bcrypt hash of user password
       role              TEXT NOT NULL DEFAULT 'user',   -- Role-Based Access Control: 'user' | 'admin'
-      twoFactorEnabled  INTEGER NOT NULL DEFAULT 0,     -- 2-Step Verification toggle
+      twoFactorEnabled  INTEGER NOT NULL DEFAULT 0,     -- Knowledge-Based Authentication (KBA) toggle
       suspended         INTEGER NOT NULL DEFAULT 0,     -- Emergency admin suspension switch
       createdAt         TEXT NOT NULL DEFAULT (strftime('%Y-%m-%dT%H:%M:%fZ','now'))
     );
 
-    -- Security questions table used for 2-step verification & password resets.
+    -- Security questions table used for KBA verification & password resets.
     -- SECURITY DESIGN: Answers are hashed with bcrypt, never stored in plaintext.
     CREATE TABLE IF NOT EXISTS security_questions (
       id            INTEGER PRIMARY KEY AUTOINCREMENT,

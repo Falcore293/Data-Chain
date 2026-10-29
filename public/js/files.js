@@ -192,27 +192,51 @@ function fileCardHTML(f) {
     : `Access until ${new Date(f.expiresAt).toLocaleString()}`;
 
   return `
-    <div class="file-card" data-id="${f.id}" data-can-manage="${f.canManage}">
-      <div class="file-card-top">
-        <div>
-          <div class="file-name">${f.originalName} ${f.latestVersion > 1 ? `<span class="badge" style="margin-left:6px;">v${f.latestVersion}</span>` : ''}</div>
-          <div class="file-meta">
-            ${directionLabel} · ${fileExtension(f.originalName)} · ${formatBytes(f.fileSize)}<br>
-            SHA-256: ${f.fileHash.slice(0, 24)}...<br>
-            ${accessLabel} · ${f.downloadCount} download(s) so far
-          </div>
+    <div class="file-card has-tile" data-id="${f.id}" data-can-manage="${f.canManage}">
+      <div class="file-tile">${fileExtension(f.originalName)}</div>
+      <div class="file-body">
+        <div class="file-name">${f.originalName} ${f.latestVersion > 1 ? `<span class="badge" style="margin-left:6px;">v${f.latestVersion}</span>` : ''}</div>
+        <div class="file-meta">
+          ${directionLabel} · ${formatBytes(f.fileSize)}<br>
+          <span class="mono">SHA-256: ${f.fileHash.slice(0, 24)}...</span><br>
+          ${accessLabel} · ${f.downloadCount} download(s) so far
         </div>
-        <div style="display:flex; flex-direction:column; align-items:flex-end; gap:6px;">
-          <span class="badge ${directionBadge}">${directionBadge}</span>
-          ${f.expired ? '<span class="badge expired">expired</span>' : ''}
+        <div class="file-actions">
+          <button class="btn-small" ${f.expired ? 'disabled' : ''} onclick="downloadFile(${f.id})">Download</button>
+          ${f.canManage && f.direction === 'personal' ? `<button class="btn-small btn-danger" onclick="deleteFile(${f.id}, '${f.originalName.replace(/'/g, "\\'")}')">Delete</button>` : ''}
         </div>
       </div>
-      <div class="file-actions">
-        <button class="btn-small" ${f.expired ? 'disabled' : ''} onclick="downloadFile(${f.id})">Download</button>
-        ${f.canManage && f.direction === 'personal' ? `<button class="btn-small btn-danger" onclick="deleteFile(${f.id}, '${f.originalName.replace(/'/g, "\\'")}')">Delete</button>` : ''}
+      <div class="file-side">
+        <span class="badge ${directionBadge}">${directionBadge}</span>
+        ${f.expired ? '<span class="badge expired">expired</span>' : ''}
       </div>
     </div>
   `;
+}
+
+function renderMyFilesStats() {
+  const el = document.getElementById('myFilesStats');
+  if (!el) return;
+
+  const totalSize = allFilesCache.reduce((sum, f) => sum + (f.fileSize || 0), 0);
+  const totalDownloads = allFilesCache.reduce((sum, f) => sum + (f.downloadCount || 0), 0);
+  const sharedCount = allFilesCache.filter((f) => f.direction !== 'personal').length;
+
+  const stats = [
+    ['Total Files', allFilesCache.length],
+    ['Storage Used', formatBytes(totalSize)],
+    ['Shared', sharedCount],
+    ['Downloads', totalDownloads]
+  ];
+
+  el.innerHTML = stats
+    .map(([label, value]) => `
+      <div class="stat-card">
+        <div class="stat-value">${value}</div>
+        <div class="stat-label">${label}</div>
+      </div>
+    `)
+    .join('');
 }
 
 function sortFiles(files, sortBy) {
@@ -232,6 +256,8 @@ let allFilesCache = [];
 function renderFileLists() {
   const personal = allFilesCache.filter((f) => f.direction === 'personal');
   const shared = allFilesCache.filter((f) => f.direction !== 'personal');
+
+  renderMyFilesStats();
 
   const myFilesSort = document.getElementById('myFilesSort').value;
   const sharedFilesSort = document.getElementById('sharedFilesSort').value;

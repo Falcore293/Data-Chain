@@ -3,7 +3,7 @@
 ## What's new
 
 ### 1. Settings replaces Security
-One panel now covers: 2-step verification toggle, changing security
+One panel now covers: KBA (Knowledge-Based Authentication) verification toggle, changing security
 questions, and requesting account termination. The old "Security"
 enable/disable flow is gone.
 
@@ -105,7 +105,7 @@ data-chain/
 │   └── presence.js              # NEW: online tracking
 ├── middleware/auth.js           # + requireNotSuspended
 ├── routes/
-│   ├── auth.js                  # mandatory signup questions, toggle-2FA, forgot-password, termination request
+│   ├── auth.js                  # mandatory signup questions, toggle-KBA, forgot-password, termination request
 │   ├── files.js / groups.js     # + suspension checks, traffic broadcast
 │   ├── blockchain.js
 │   └── admin.js                 # + suspend, deletion requests, online users, file traffic

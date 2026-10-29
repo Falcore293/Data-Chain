@@ -88,7 +88,7 @@ const { Server } = require('socket.io');
 const { getDB } = require('./db/database');
 
 // Route modules — each handles a group of related API endpoints:
-const authRoutes = require('./routes/auth');           // signup, login, 2FA, password reset
+const authRoutes = require('./routes/auth');           // signup, login, KBA, password reset
 const filesRoutes = require('./routes/files');         // upload, send, download, versioning
 const blockchainRoutes = require('./routes/blockchain'); // view & validate the hash-chained ledger
 const groupsRoutes = require('./routes/groups');       // create groups, add members, group file sharing
@@ -178,7 +178,7 @@ app.use('/api/auth/signup', authLimiter);  // Apply to signup endpoint
 // ============================================================================
 
 // --- Routes ---
-app.use('/api/auth', authRoutes);             // Authentication: signup, login, 2FA, password reset
+app.use('/api/auth', authRoutes);             // Authentication: signup, login, KBA, password reset
 app.use('/api/files', filesRoutes);           // File operations: upload, send, download, versioning
 app.use('/api/blockchain', blockchainRoutes); // Blockchain: view ledger, validate chain integrity
 app.use('/api/groups', groupsRoutes);         // Groups: create, manage members, group file sharing

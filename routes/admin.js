@@ -42,7 +42,7 @@ router.use(requireAuth, requireAdmin);
 // ============================================================================
 // ROUTE: GET /api/admin/users
 // ============================================================================
-// Retrieves user directory along with role status, 2FA status, suspension flag,
+// Retrieves user directory along with role status, KBA status, suspension flag,
 // owned file counts, and real-time online status.
 // ============================================================================
 router.get('/users', async (req, res) => {
@@ -52,7 +52,7 @@ router.get('/users', async (req, res) => {
             (SELECT COUNT(*) FROM files WHERE ownerEmail = users.email) as filesOwned
      FROM users ORDER BY createdAt DESC`
   );
-  res.json({ users: users.map((u) => ({ ...u, online: presence.isOnline(u.email) })) });
+  res.json({ users: users.map((u) => ({ ...u, kbaEnabled: !!u.twoFactorEnabled, online: presence.isOnline(u.email) })) });
 });
 
 // ============================================================================

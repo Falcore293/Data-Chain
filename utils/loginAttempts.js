@@ -113,7 +113,7 @@ function getStatus(email) {
 //   3 fresh attempts.
 //
 // SHARED BUCKET:
-//   The same lockout counter is shared between login, 2FA verification,
+//   The same lockout counter is shared between login, KBA verification,
 //   and password reset attempts. This prevents attackers from bypassing
 //   the login lockout by switching to the password reset flow.
 // ============================================================================

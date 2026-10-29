@@ -45,7 +45,7 @@ async function loadAdminUsers() {
               ${u.email} ${u.suspended ? '<span class="badge expired" style="margin-left:6px;">suspended</span>' : ''}
             </div>
             <div class="file-meta">
-              Role: ${u.role} · 2FA: ${u.twoFactorEnabled ? 'on' : 'off'} · ${u.filesOwned} file(s) owned<br>
+              Role: ${u.role} · KBA: ${(u.kbaEnabled ?? u.twoFactorEnabled) ? 'on' : 'off'} · ${u.filesOwned} file(s) owned<br>
               Joined ${new Date(u.createdAt).toLocaleString()}
             </div>
           </div>

@@ -118,6 +118,18 @@ questionsForm.addEventListener('submit', async (e) => {
   }
 });
 
+function downloadPrivateKeyFile(bundle) {
+  const blob = new Blob([JSON.stringify(bundle, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `${bundle.email}.datachain-key.json`;
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+  URL.revokeObjectURL(url);
+}
+
 resetForm.addEventListener('submit', async (e) => {
   e.preventDefault();
   const btn = document.getElementById('resetSubmitBtn');
@@ -142,7 +154,16 @@ resetForm.addEventListener('submit', async (e) => {
     }
 
     resetForm.style.display = 'none';
-    showMsg(`${data.message}`, 'success');
+
+    if (data.privateKeyBundle) {
+      downloadPrivateKeyFile(data.privateKeyBundle);
+      showMsg(`${data.message} Redirecting to login...`, 'success');
+      setTimeout(() => {
+        window.location.href = 'login.html';
+      }, 6000);
+    } else {
+      showMsg(`${data.message}`, 'success');
+    }
     msgBox.style.display = 'block';
   } catch (err) {
     showMsg('Could not reach the server.', 'error');

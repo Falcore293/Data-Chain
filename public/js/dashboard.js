@@ -36,15 +36,18 @@ document.querySelectorAll('.nav-item').forEach((item) => {
   });
 });
 
-// Account info: whether to show the Admin nav item, and current 2FA
+// Account info: whether to show the Admin nav item, and current KBA
 // state for the Settings panel. Fetched once on load.
-let currentUser = { role: 'user', twoFactorEnabled: false };
+let currentUser = { role: 'user', twoFactorEnabled: false, kbaEnabled: false };
 
 async function loadCurrentUser() {
   try {
     const res = await fetch('/api/auth/me', { headers: { Authorization: `Bearer ${token}` } });
     if (!res.ok) return;
     currentUser = await res.json();
+    if (currentUser.kbaEnabled === undefined) {
+      currentUser.kbaEnabled = currentUser.twoFactorEnabled;
+    }
 
     if (currentUser.role === 'admin') {
       document.getElementById('adminNavItem').style.display = 'flex';
@@ -65,11 +68,12 @@ function updateTwoFaUI() {
   const statusEl = document.getElementById('twoFaStatus');
   if (!statusEl) return;
 
-  if (currentUser.twoFactorEnabled) {
-    statusEl.textContent = '2-step verification is ON — security questions are required at login.';
+  const isEnabled = currentUser.kbaEnabled ?? currentUser.twoFactorEnabled;
+  if (isEnabled) {
+    statusEl.textContent = 'KBA verification is ON — security questions are required at login.';
     statusEl.className = 'msg success';
   } else {
-    statusEl.textContent = '2-step verification is OFF — login only needs your password. Your security questions still work for "Forgot password".';
+    statusEl.textContent = 'KBA verification is OFF — login only needs your password. Your security questions still work for "Forgot password".';
     statusEl.className = 'msg';
   }
   statusEl.style.display = 'block';
